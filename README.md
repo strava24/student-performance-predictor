@@ -175,10 +175,23 @@ from src.logger import logging
 logging.info("Training started")
 ```
 
-`logs/` is created relative to where you run the command, so run scripts from the project root, for example `python -m src.exception`.
+`logs/` is created relative to where you run the command. The project is installed in editable mode, so `src` imports work whether you run a script directly (`python src/exception.py`) or as a module (`python -m src.exception`) — just run it from the project root so the relative `logs/`/`artifacts/` paths resolve correctly.
+
+### Data Ingestion (`src/components/data_ingestion.py`)
+
+- `DataIngestionConfig`: a `@dataclass` holding the output paths (`artifacts/data.csv`, `train.csv`, `test.csv`).
+- `DataIngestion.initiate_data_ingestion()`: reads `notebook/data/stud.csv`, saves an untouched copy to `data.csv`, splits it 80/20 into train/test (`random_state=42`), saves both, and returns their paths.
+- Running the file directly also chains into `DataTransformation`.
+
+### Data Transformation (`src/components/data_transformation.py`)
+
+- `DataTransformationConfig`: holds the path for the fitted preprocessor (`artifacts/preprocessor.pkl`).
+- `get_data_transformer_object()`: builds an (unfitted) `ColumnTransformer` — numeric columns go through median-impute → scale, categorical columns through mode-impute → one-hot → scale (`with_mean=False`, since one-hot output is sparse).
+- `initiate_data_transformation()`: reads the train/test CSVs, separates the `math_score` target from the features, fits the preprocessor on the training features only and transforms both train and test (so no test-set statistics leak into training), reattaches the target column, and saves the **fitted** preprocessor with `save_object()` (`src/utils.py`, uses `dill`) to `preprocessor.pkl`.
+- **Fitted vs. unfitted:** a fresh preprocessor only knows *what* to do (impute, scale, encode); fitting is what makes it learn the actual numbers (medians, means, categories) from training data. It's pickled so `predict_pipeline.py` can later reload that exact fitted state and transform new input the same way, without refitting.
 
 ## Next Steps
 
-- Implement the data ingestion, transformation and model training components under `src/components/`
+- Implement the model training component under `src/components/model_trainer.py`
 - Implement the training and prediction pipelines under `src/pipeline/`
 - Add model evaluation
