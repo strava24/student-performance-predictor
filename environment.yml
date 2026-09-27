@@ -1,0 +1,10 @@
+name: generic-ml
+channels:
+  - conda-forge
+dependencies:
+  - python=3.14
+  - llvm-openmp        # libomp, needed by xgboost on macOS
+  - ipykernel          # notebooks only, kept out of requirements.txt
+  - pip
+  - pip:
+      - -r requirements.txt
