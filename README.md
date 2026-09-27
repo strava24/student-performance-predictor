@@ -18,6 +18,10 @@ generic-ml/
 │   ├── utils.py              # shared helper functions
 │   ├── components/           # data ingestion, transformation, model training
 │   └── pipeline/             # training and prediction pipelines
+├── notebook/
+│   ├── 1 . EDA STUDENT PERFORMANCE .ipynb   # exploratory data analysis
+│   ├── 2. MODEL TRAINING.ipynb              # model comparison and selection
+│   └── data/stud.csv                        # dataset
 ├── logs/                     # generated at runtime (not tracked by git)
 └── venv/                     # local conda environment (not tracked by git)
 ```
@@ -79,6 +83,64 @@ pip install -e .
 ```
 
 This runs `setup.py`, which reads `requirements.txt` by relative path, so it must be run from the project root. It also generates an `ml_project.egg-info/` folder, which is git-ignored.
+
+## Notebook Findings
+
+The notebooks in `notebook/` explore the data and prototype the model before the work moves into `src/`.
+
+### Dataset
+
+[Students Performance in Exams](https://www.kaggle.com/datasets/spscientist/students-performance-in-exams) (Kaggle): 1,000 students, 8 columns.
+
+| Column | Type | Values |
+|---|---|---|
+| `gender` | categorical | female, male |
+| `race_ethnicity` | categorical | group A to group E |
+| `parental_level_of_education` | categorical | some high school, high school, some college, associate's, bachelor's, master's |
+| `lunch` | categorical | standard, free/reduced |
+| `test_preparation_course` | categorical | none, completed |
+| `math_score`, `reading_score`, `writing_score` | numeric | 0 to 100 |
+
+### EDA (`1 . EDA STUDENT PERFORMANCE .ipynb`)
+
+The goal is to understand how a student's test scores relate to their background.
+
+- **Data quality:** no missing values or duplicates, and every column has the correct type.
+- **Score statistics:** the three subjects have similar means (math 66.1, reading 69.2, writing 68.1) and standard deviations (about 15). Math has the lowest minimum score (0, against 17 for reading and 10 for writing).
+- **Subject difficulty:** students do worst in math (7 full marks, 4 scores of 20 or less) and best in reading (17 full marks, 1 score of 20 or less).
+- **Gender:** the classes are balanced (518 female, 482 male). Females have the higher overall average (69.6 vs 65.8), but males score higher in math (68.7 vs 63.6).
+- **Race/ethnicity:** group C is the largest and group A the smallest. Group E scores highest in every subject and group A lowest.
+- **Parental education:** "some college" and "associate's degree" are the most common levels. Students whose parents have a bachelor's or master's degree score higher.
+- **Lunch:** most students get standard lunch. Students with standard lunch score higher than those on free/reduced lunch, for both genders.
+- **Test preparation course:** most students did not take the course. Those who completed it score higher in all three subjects.
+- **Score correlation:** math, reading and writing scores increase linearly with each other.
+
+**Conclusion:** performance is related to lunch type, race/ethnicity, parental education and gender, and completing the test preparation course helps.
+
+### Model Training (`2. MODEL TRAINING.ipynb`)
+
+The goal is a regression model that predicts `math_score`.
+
+- **Features:** the other 7 columns (the 5 categorical columns plus `reading_score` and `writing_score`).
+- **Preprocessing:** a `ColumnTransformer` one-hot encodes the categorical columns and standard-scales the numeric ones, giving 19 features.
+- **Split:** 80% train and 20% test (`random_state=42`).
+- **Evaluation:** RMSE, MAE and R² on both sets.
+
+Test-set R² for the 9 models compared:
+
+| Model | R² |
+|---|---|
+| Ridge | 0.881 |
+| Linear Regression | 0.880 |
+| CatBoost Regressor | 0.852 |
+| AdaBoost Regressor | 0.850 |
+| Random Forest Regressor | 0.847 |
+| Lasso | 0.825 |
+| XGBoost Regressor | 0.822 |
+| K-Neighbors Regressor | 0.784 |
+| Decision Tree | 0.760 |
+
+**Result:** the linear models perform best, because math scores are strongly linearly correlated with reading and writing scores. Linear Regression was chosen as the final model (R² of 0.880, test RMSE of about 5.4 and MAE of about 4.2 marks). Its actual vs predicted plot follows the diagonal closely.
 
 ## How It Works
 
