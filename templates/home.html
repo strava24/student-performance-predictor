@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict Math Score &mdash; Student Performance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a class="brand" href="{{ url_for('index') }}">
+                <span class="brand-mark">SP</span>
+                Student Performance
+            </a>
+            <a class="nav-link" href="{{ url_for('index') }}">&larr; Back home</a>
+        </nav>
+
+        <div class="form-wrap">
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h1>Student Exam Performance Prediction</h1>
+                    <p>Fill in the details below to estimate a math exam score out of 100.</p>
+                </div>
+
+                {% if results is defined and results is not none %}
+                <div class="result-banner">
+                    <div class="result-icon">📊</div>
+                    <div>
+                        <p class="result-label">Predicted math score</p>
+                        <p class="result-value">{{ results }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form action="{{ url_for('predict_datapoint') }}" method="post">
+                    <div class="field-grid">
+                        <div class="field">
+                            <label for="gender">Gender</label>
+                            <select id="gender" class="form-control" name="gender" required>
+                                <option class="placeholder" selected disabled value="">Select gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="race_ethnicity">Race or Ethnicity</label>
+                            <select id="race_ethnicity" class="form-control" name="race_ethnicity" required>
+                                <option class="placeholder" selected disabled value="">Select ethnicity</option>
+                                <option value="group A">Group A</option>
+                                <option value="group B">Group B</option>
+                                <option value="group C">Group C</option>
+                                <option value="group D">Group D</option>
+                                <option value="group E">Group E</option>
+                            </select>
+                        </div>
+
+                        <div class="field span-2">
+                            <label for="parental_level_of_education">Parental Level of Education</label>
+                            <select id="parental_level_of_education" class="form-control"
+                                name="parental_level_of_education" required>
+                                <option class="placeholder" selected disabled value="">Select parental education</option>
+                                <option value="associate's degree">Associate's degree</option>
+                                <option value="bachelor's degree">Bachelor's degree</option>
+                                <option value="high school">High school</option>
+                                <option value="master's degree">Master's degree</option>
+                                <option value="some college">Some college</option>
+                                <option value="some high school">Some high school</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="lunch">Lunch Type</label>
+                            <select id="lunch" class="form-control" name="lunch" required>
+                                <option class="placeholder" selected disabled value="">Select lunch type</option>
+                                <option value="free/reduced">Free/reduced</option>
+                                <option value="standard">Standard</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="test_preparation_course">Test Preparation Course</label>
+                            <select id="test_preparation_course" class="form-control"
+                                name="test_preparation_course" required>
+                                <option class="placeholder" selected disabled value="">Select course status</option>
+                                <option value="none">None</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="reading_score">Reading Score (out of 100)</label>
+                            <input id="reading_score" class="form-control" type="number" name="reading_score"
+                                placeholder="e.g. 72" min="0" max="100" required />
+                        </div>
+
+                        <div class="field">
+                            <label for="writing_score">Writing Score (out of 100)</label>
+                            <input id="writing_score" class="form-control" type="number" name="writing_score"
+                                placeholder="e.g. 68" min="0" max="100" required />
+                        </div>
+                    </div>
+
+                    <div class="submit-row">
+                        <button class="btn btn-primary" type="submit">Predict my math score</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer class="site-footer">
+            Built as a learning project for an end-to-end machine learning pipeline.
+        </footer>
+    </div>
+</body>
+</html>

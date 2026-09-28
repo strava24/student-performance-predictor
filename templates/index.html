@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Exam Performance Predictor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <div class="brand">
+                <span class="brand-mark">SP</span>
+                Student Performance
+            </div>
+            <a class="nav-link" href="{{ url_for('predict_datapoint') }}">Try the predictor</a>
+        </nav>
+
+        <main class="hero">
+            <div class="hero-inner">
+                <span class="eyebrow"><span class="eyebrow-dot"></span> Machine Learning Demo</span>
+
+                <h1>Predict a student's <span class="gradient-text">math score</span> from a few quick details</h1>
+
+                <p class="lede">
+                    This end-to-end ML project trains a regression model on demographic and academic
+                    inputs &mdash; gender, parental education, test preparation, and reading &amp; writing
+                    scores &mdash; to estimate a student's math performance in seconds.
+                </p>
+
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="{{ url_for('predict_datapoint') }}">Make a prediction</a>
+                    <a class="btn btn-ghost" href="https://github.com" target="_blank" rel="noopener">View the code</a>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Trained &amp; tuned</h3>
+                        <p>Multiple regressors are benchmarked and hyperparameter-tuned to pick the best performer.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Instant results</h3>
+                        <p>Submit the form and get a predicted math score back immediately, no waiting.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🧩</div>
+                        <h3>Simple inputs</h3>
+                        <p>Just six everyday attributes &mdash; no technical knowledge required to use it.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="site-footer">
+            Built as a learning project for an end-to-end machine learning pipeline.
+        </footer>
+    </div>
+</body>
+</html>
