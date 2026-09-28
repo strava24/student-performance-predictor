@@ -6,12 +6,12 @@ In the current approach we are reading the data from a csv file and then splitti
 But in real time scenario we can get the data from different sources like database, API, web scraping etc. and then we can process it and store it in a csv file or database for further processing
 '''
 import os
-from symtable import Class
 import sys
 
 from src.logger import logging
 from src.exception import CustomException
 from src.components.data_transformation import DataTransformation
+from src.components.model_trainer import ModelTrainer
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 '''
 it is a good practice to create a config class for data ingestion
-in python prespective since this class only holds class variables and no methods, 
+in python perspective since this class only holds class variables and no methods, 
 it is a good practice to use dataclass decorator to create this class
 '''
 @dataclass
@@ -70,4 +70,8 @@ if __name__ == "__main__":
     train_data, test_data = obj.initiate_data_ingestion()
 
     data_transformation = DataTransformation()
-    data_transformation.initiate_data_transformation(train_data, test_data)
+    train_data, test_data, _ = data_transformation.initiate_data_transformation(train_data, test_data)
+
+    model_trainer = ModelTrainer()
+    r2_square = model_trainer.initiate_model_trainer(train_data, test_data)
+    logging.info(f"r2_score from the best model {r2_square}")
