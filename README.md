@@ -190,8 +190,24 @@ logging.info("Training started")
 - `initiate_data_transformation()`: reads the train/test CSVs, separates the `math_score` target from the features, fits the preprocessor on the training features only and transforms both train and test (so no test-set statistics leak into training), reattaches the target column, and saves the **fitted** preprocessor with `save_object()` (`src/utils.py`, uses `dill`) to `preprocessor.pkl`.
 - **Fitted vs. unfitted:** a fresh preprocessor only knows *what* to do (impute, scale, encode); fitting is what makes it learn the actual numbers (medians, means, categories) from training data. It's pickled so `predict_pipeline.py` can later reload that exact fitted state and transform new input the same way, without refitting.
 
+### Model Training (`src/components/model_trainer.py`)
+
+- `ModelTrainerConfig`: holds the path for the trained model (`artifacts/model.pkl`).
+- `initiate_model_trainer(train_array, test_array)`: takes the numpy arrays returned by `DataTransformation` (last column is the `math_score` target), slices each into `X`/`y`, then tunes and scores 8 candidate regressors — Random Forest, Decision Tree, Gradient Boosting, Linear Regression, K-Neighbors, XGBoost, CatBoost and AdaBoost — via `evaluate_models()` in `src/utils.py`. Each has a matching entry in a `params` dict of hyperparameter grids to search (an empty grid for `Linear Regression`, since it has nothing to tune).
+- `evaluate_models()` runs `GridSearchCV(model, para, cv=3)` per model to find the best hyperparameters, then **refits that model on the full training split with those best params** (`model.set_params(**gs.best_params_)` then `model.fit(...)`) before scoring it against the test split with R², returning a `{model_name: test_r2}` report. Skipping that refit step is a common mistake — `GridSearchCV.fit()` only trains its own internal clones, not the original `model` object, so predicting straight after `gs.fit()` raises `NotFittedError` on the untrained estimator.
+- The model with the highest test R² wins; if that score is still below `0.6`, `initiate_model_trainer()` raises a `CustomException` instead of shipping a weak model. Otherwise it logs the winner, pickles it to `artifacts/model.pkl` via `save_object()`, and returns its test R².
+
+## End-to-End Flow
+
+There's no standalone pipeline entry point yet, so running `python src/components/data_ingestion.py` is currently the way to exercise the whole thing — its `__main__` block chains straight through transformation and training:
+
+1. **Ingestion** (`data_ingestion.py`): reads `notebook/data/stud.csv`, writes an untouched copy to `artifacts/data.csv`, splits it 80/20 (`random_state=42`) into `artifacts/train.csv` / `artifacts/test.csv`, and returns those two paths.
+2. **Transformation** (`data_transformation.py`): loads the train/test CSVs from those paths, builds the `ColumnTransformer` preprocessor, fits it on the training features only, transforms both splits (with the `math_score` target reattached as the last column), pickles the fitted preprocessor to `artifacts/preprocessor.pkl`, and returns `(train_arr, test_arr, preprocessor_path)`.
+3. **Training** (`model_trainer.py`): takes `train_arr`/`test_arr`, splits each into `X`/`y`, grid-searches hyperparameters for each candidate regressor, refits each on its best params, picks the best-scoring one, pickles it to `artifacts/model.pkl`, and returns its final R², which gets logged.
+
+Every step logs through `src/logger.py` and wraps its body in `try/except` so failures surface as a `CustomException` with the originating file and line number. Once `src/pipeline/train_pipeline.py` is implemented, this same three-step wiring is expected to move there instead of living in `data_ingestion.py`'s `__main__` block.
+
 ## Next Steps
 
-- Implement the model training component under `src/components/model_trainer.py`
 - Implement the training and prediction pipelines under `src/pipeline/`
-- Add model evaluation
+- Add model evaluation reporting/metrics beyond the console log
