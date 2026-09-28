@@ -8,6 +8,7 @@ A reusable, end-to-end machine learning project in Python. This README tracks wh
 generic-ml/
 ├── .gitignore
 ├── README.md
+├── app.py                    # Flask app: home page + /predict form endpoint
 ├── environment.yml           # conda environment (Python, system libraries, pip deps)
 ├── requirements.txt          # Python package dependencies
 ├── setup.py                  # makes the project an installable package
@@ -15,13 +16,18 @@ generic-ml/
 │   ├── __init__.py           # marks src as a Python package
 │   ├── exception.py          # custom exception handling
 │   ├── logger.py             # logging configuration
-│   ├── utils.py              # shared helper functions
+│   ├── utils.py              # shared helper functions (save_object, load_object, evaluate_models)
 │   ├── components/           # data ingestion, transformation, model training
-│   └── pipeline/             # training and prediction pipelines
+│   └── pipeline/             # training pipeline (stub) and prediction pipeline
+├── templates/
+│   ├── index.html            # landing page
+│   └── home.html             # prediction form + result
+├── static/css/style.css      # shared styling for the Flask pages
 ├── notebook/
 │   ├── 1 . EDA STUDENT PERFORMANCE .ipynb   # exploratory data analysis
 │   ├── 2. MODEL TRAINING.ipynb              # model comparison and selection
 │   └── data/stud.csv                        # dataset
+├── artifacts/                # generated at runtime: data.csv, train/test.csv, preprocessor.pkl, model.pkl (not tracked by git)
 ├── logs/                     # generated at runtime (not tracked by git)
 └── venv/                     # local conda environment (not tracked by git)
 ```
@@ -76,13 +82,43 @@ conda deactivate
 pip install -r requirements.txt
 ```
 
-This installs `pandas`, `numpy`, `seaborn`, `matplotlib`, `scikit-learn`, `catboost` and `xgboost` (unpinned, so the latest versions for your Python). The `-e .` line at the end of `requirements.txt` is currently commented out (`# -e .`), so this step does not install the project itself. To make `src` importable from anywhere, install the project in editable mode separately, from the project root:
+This installs `pandas`, `numpy`, `seaborn`, `matplotlib`, `scikit-learn`, `catboost`, `xgboost`, `dill` (used by `save_object`/`load_object` to pickle the preprocessor and model) and `Flask` (unpinned, so the latest versions for your Python). The `-e .` line at the end of `requirements.txt` is currently commented out (`# -e .`), so this step does not install the project itself. To make `src` importable from anywhere, install the project in editable mode separately, from the project root:
 
 ```bash
 pip install -e .
 ```
 
 This runs `setup.py`, which reads `requirements.txt` by relative path, so it must be run from the project root. It also generates an `ml_project.egg-info/` folder, which is git-ignored.
+
+## Running the Flask App
+
+The app serves a form that predicts a student's `math_score` from a trained model. It needs `artifacts/preprocessor.pkl` and `artifacts/model.pkl` to already exist — those aren't committed (they're git-ignored, generated at runtime), so they must be produced locally first.
+
+1. **Set up and activate the environment**, and install the project in editable mode, as described above:
+
+   ```bash
+   conda env create -p ./venv -f environment.yml
+   conda activate ./venv
+   pip install -e .
+   ```
+
+2. **Generate the artifacts** by running the ingestion → transformation → training chain (there's no `train_pipeline.py` entry point yet, so `data_ingestion.py`'s `__main__` block does this — see [End-to-End Flow](#end-to-end-flow)). From the project root:
+
+   ```bash
+   python src/components/data_ingestion.py
+   ```
+
+   This reads `notebook/data/stud.csv` and writes `artifacts/data.csv`, `train.csv`, `test.csv`, `preprocessor.pkl` and `model.pkl`.
+
+3. **Start the Flask app**, from the project root (so the `artifacts/` relative paths resolve):
+
+   ```bash
+   python app.py
+   ```
+
+   This runs with `debug=True` on `http://0.0.0.0:8080` (open `http://localhost:8080`).
+
+4. **Use it**: `/` shows the landing page (`templates/index.html`); `/predict` (GET) shows the form (`templates/home.html`), and submitting it (POST, same route) fills in a predicted math score on the same page.
 
 ## Notebook Findings
 
@@ -207,7 +243,9 @@ There's no standalone pipeline entry point yet, so running `python src/component
 
 Every step logs through `src/logger.py` and wraps its body in `try/except` so failures surface as a `CustomException` with the originating file and line number. Once `src/pipeline/train_pipeline.py` is implemented, this same three-step wiring is expected to move there instead of living in `data_ingestion.py`'s `__main__` block.
 
+Once `artifacts/preprocessor.pkl` and `artifacts/model.pkl` exist, `src/pipeline/predict_pipeline.py` and `app.py` (see [Prediction Pipeline](#prediction-pipeline-srcpipelinepredict_pipelinepy) and [Flask App](#flask-app-apppy) above) close the loop: raw form input → `CustomData` → DataFrame → preprocessor `.transform()` → model `.predict()` → score rendered back on the page.
+
 ## Next Steps
 
-- Implement the training and prediction pipelines under `src/pipeline/`
+- Implement `src/pipeline/train_pipeline.py` (currently an empty stub) so the ingestion → transformation → training chain doesn't have to be triggered via `data_ingestion.py`'s `__main__` block
 - Add model evaluation reporting/metrics beyond the console log
