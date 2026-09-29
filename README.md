@@ -113,7 +113,7 @@ The app serves a form that predicts a student's `math_score` from a trained mode
 3. **Start the Flask app**, from the project root (so the `artifacts/` relative paths resolve):
 
    ```bash
-   python app.py
+   python application.py
    ```
 
    This runs with `debug=True` on `http://0.0.0.0:8080` (open `http://localhost:8080`).
@@ -243,7 +243,7 @@ There's no standalone pipeline entry point yet, so running `python src/component
 
 Every step logs through `src/logger.py` and wraps its body in `try/except` so failures surface as a `CustomException` with the originating file and line number. Once `src/pipeline/train_pipeline.py` is implemented, this same three-step wiring is expected to move there instead of living in `data_ingestion.py`'s `__main__` block.
 
-Once `artifacts/preprocessor.pkl` and `artifacts/model.pkl` exist, `src/pipeline/predict_pipeline.py` and `app.py` (see [Prediction Pipeline](#prediction-pipeline-srcpipelinepredict_pipelinepy) and [Flask App](#flask-app-apppy) above) close the loop: raw form input → `CustomData` → DataFrame → preprocessor `.transform()` → model `.predict()` → score rendered back on the page.
+Once `artifacts/preprocessor.pkl` and `artifacts/model.pkl` exist, `src/pipeline/predict_pipeline.py` and `application.py` (see [Prediction Pipeline](#prediction-pipeline-srcpipelinepredict_pipelinepy) and [Flask App](#flask-app-apppy) above) close the loop: raw form input → `CustomData` → DataFrame → preprocessor `.transform()` → model `.predict()` → score rendered back on the page.
 
 ## Next Steps
 
